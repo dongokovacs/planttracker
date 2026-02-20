@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@environments/environment';
 
 interface UnsplashPhoto {
   id: string;
