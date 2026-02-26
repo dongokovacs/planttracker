@@ -86,10 +86,33 @@ select {
   font-size: inherit;
 }
 
-/* Focus States */
+/* Focus States - Enhanced for Accessibility */
+*:focus {
+  outline: none;
+}
+
 *:focus-visible {
-  outline: 2px solid var(--primary-green);
+  outline: 3px solid var(--primary-green);
   outline-offset: 2px;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--primary-green);
+  outline-offset: 3px;
+}
+
+a:focus-visible {
+  outline: 3px solid var(--primary-green);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--primary-green);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Scrollbar Styling */
