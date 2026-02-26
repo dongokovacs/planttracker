@@ -23,32 +23,46 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
     <div class="dashboard">
       <header class="dashboard-header">
         <div class="header-content">
-          <h1 class="title">🌱 PlantTracker</h1>
+          <h1 class="title">
+            <span aria-hidden="true">🌱</span>
+            PlantTracker
+          </h1>
           <p class="subtitle">Kövesse nyomon növényeit egyszerűen</p>
         </div>
-        <a routerLink="/plants/add" class="add-button">
-          <span class="add-icon">+</span>
+        <a 
+          routerLink="/plants/add" 
+          class="add-button"
+          aria-label="Új növény hozzáadása"
+        >
+          <span class="add-icon" aria-hidden="true">+</span>
           Új növény
         </a>
       </header>
 
-      <div class="dashboard-controls">
+      <section class="dashboard-controls" aria-label="Keresés és szűrők">
+        <h2 class="visually-hidden">Növények keresése és szűrése</h2>
         <div class="search-bar">
-          <span class="search-icon">🔍</span>
+          <label for="search-input" class="visually-hidden">Keresés növény neve szerint</label>
+          <span class="search-icon" aria-hidden="true">🔍</span>
           <input
-            type="text"
+            id="search-input"
+            type="search"
             [(ngModel)]="searchQuery"
             (ngModelChange)="onSearchChange()"
             placeholder="Keresés növény neve szerint..."
             class="search-input"
+            aria-label="Keresés növény neve szerint"
           />
         </div>
 
-        <div class="filters">
+        <div class="filters" role="group" aria-label="Szűrők">
+          <label for="location-filter" class="visually-hidden">Szűrés helyszín szerint</label>
           <select
+            id="location-filter"
             [(ngModel)]="selectedLocation"
             (ngModelChange)="onFilterChange()"
             class="filter-select"
+            aria-label="Szűrés helyszín szerint"
           >
             <option value="">Minden helyszín</option>
             @for (location of locations(); track location) {
@@ -56,10 +70,13 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
             }
           </select>
 
+          <label for="status-filter" class="visually-hidden">Szűrés státusz szerint</label>
           <select
+            id="status-filter"
             [(ngModel)]="selectedStatus"
             (ngModelChange)="onFilterChange()"
             class="filter-select"
+            aria-label="Szűrés státusz szerint"
           >
             <option value="">Minden státusz</option>
             <option value="planted">Ültetett</option>
@@ -67,23 +84,27 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
             <option value="ready">Szedésre kész</option>
           </select>
 
+          <label for="sort-order" class="visually-hidden">Rendezés</label>
           <select
+            id="sort-order"
             [(ngModel)]="sortOrder"
             (ngModelChange)="onSortChange()"
             class="filter-select"
+            aria-label="Növények rendezése"
           >
             <option value="desc">Legújabb elöl</option>
             <option value="asc">Legrégebbi elöl</option>
           </select>
         </div>
-      </div>
+      </section>
 
       @if (isLoading()) {
-        <div class="plants-grid">
+        <section class="plants-grid" aria-label="Növények betöltése" aria-busy="true">
+          <h2 class="visually-hidden">Növények betöltése</h2>
           @for (item of [1,2,3]; track item) {
             <app-loading-skeleton type="card"></app-loading-skeleton>
           }
-        </div>
+        </section>
       } @else if (filteredPlants().length === 0) {
         @if (plants().length === 0) {
           <app-empty-state
@@ -103,19 +124,26 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
           ></app-empty-state>
         }
       } @else {
-        <div class="plants-grid">
-          @for (plant of filteredPlants(); track plant.id) {
-            <app-plant-card
-              [plant]="plant"
-              [daysUntilHarvest]="getDaysUntilHarvest(plant)"
-              [status]="getPlantStatus(plant)"
-            ></app-plant-card>
-          }
-        </div>
+        <section class="plants-section" aria-label="Növények listája">
+          <h2 class="visually-hidden">Növényeim</h2>
+          <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            {{ filteredPlants().length }} növény található
+          </div>
+          <div class="plants-grid">
+            @for (plant of filteredPlants(); track plant.id) {
+              <app-plant-card
+                [plant]="plant"
+                [daysUntilHarvest]="getDaysUntilHarvest(plant)"
+                [status]="getPlantStatus(plant)"
+              ></app-plant-card>
+            }
+          </div>
+        </section>
       }
 
       @if (filteredPlants().length > 0) {
-        <div class="dashboard-stats">
+        <section class="dashboard-stats" aria-label="Statisztikák">
+          <h2 class="visually-hidden">Növények statisztikái</h2>
           <div class="stat-card">
             <div class="stat-value">{{ plants().length }}</div>
             <div class="stat-label">Összes növény</div>
@@ -128,11 +156,35 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
             <div class="stat-value">{{ maturingCount() }}</div>
             <div class="stat-label">Érlelődik</div>
           </div>
-        </div>
+        </section>
       }
     </div>
   `,
   styles: [`
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
     .dashboard {
       max-width: 1400px;
       margin: 0 auto;
@@ -184,6 +236,11 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
       transform: translateY(-2px);
     }
 
+    .add-button:focus-visible {
+      outline: 3px solid #2d6a4f;
+      outline-offset: 3px;
+    }
+
     .add-icon {
       font-size: 1.25rem;
       font-weight: 700;
@@ -220,6 +277,12 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
       outline: none;
     }
 
+    .search-input:focus-visible {
+      outline: 2px solid #2d6a4f;
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
     .filters {
       display: flex;
       gap: 1rem;
@@ -242,6 +305,11 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
     .filter-select:focus {
       border-color: #2d6a4f;
       outline: none;
+    }
+
+    .filter-select:focus-visible {
+      outline: 3px solid #2d6a4f;
+      outline-offset: 2px;
     }
 
     .plants-grid {

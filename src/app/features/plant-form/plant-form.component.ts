@@ -12,11 +12,12 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="form-container">
+    <main class="form-container">
       <div class="form-card">
         <header class="form-header">
-          <h1 class="form-title">
-            {{ isEditMode() ? '✏️ Növény szerkesztése' : '🌱 Új növény hozzáadása' }}
+          <h1 id="form-title" class="form-title">
+            <span aria-hidden="true">{{ isEditMode() ? '✏️' : '🌱' }}</span>
+            {{ isEditMode() ? 'Növény szerkesztése' : 'Új növény hozzáadása' }}
           </h1>
           <p class="form-subtitle">
             {{ isEditMode() 
@@ -26,7 +27,13 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
           </p>
         </header>
 
-        <form [formGroup]="plantForm" (ngSubmit)="onSubmit()" class="plant-form">
+        <form 
+          [formGroup]="plantForm" 
+          (ngSubmit)="onSubmit()" 
+          class="plant-form"
+          aria-labelledby="form-title"
+          novalidate
+        >
           <div class="form-group">
             <label for="name" class="form-label">
               Növény neve <span class="required">*</span>
@@ -35,12 +42,16 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
               id="name"
               type="text"
               formControlName="name"
-              placeholder="pl. Paradicsom, Bazsalikom"
+              placeholder="pl. Paradicsom"
               class="form-input"
+              autocomplete="off"
+              aria-required="true"
+              [attr.aria-invalid]="plantForm.get('name')?.invalid && plantForm.get('name')?.touched"
+              [attr.aria-describedby]="plantForm.get('name')?.invalid && plantForm.get('name')?.touched ? 'name-error' : null"
               [class.error]="plantForm.get('name')?.invalid && plantForm.get('name')?.touched"
             />
             @if (plantForm.get('name')?.invalid && plantForm.get('name')?.touched) {
-              <span class="error-message">A növény neve kötelező</span>
+              <span id="name-error" class="error-message" role="alert">A növény neve kötelező</span>
             }
           </div>
 
@@ -54,6 +65,7 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
               formControlName="variety"
               placeholder="pl. Cherry, Genovese"
               class="form-input"
+              autocomplete="off"
             />
           </div>
 
@@ -67,10 +79,13 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
               formControlName="plantedDate"
               class="form-input"
               [max]="today"
+              aria-required="true"
+              [attr.aria-invalid]="plantForm.get('plantedDate')?.invalid && plantForm.get('plantedDate')?.touched"
+              [attr.aria-describedby]="plantForm.get('plantedDate')?.invalid && plantForm.get('plantedDate')?.touched ? 'plantedDate-error' : null"
               [class.error]="plantForm.get('plantedDate')?.invalid && plantForm.get('plantedDate')?.touched"
             />
             @if (plantForm.get('plantedDate')?.invalid && plantForm.get('plantedDate')?.touched) {
-              <span class="error-message">
+              <span id="plantedDate-error" class="error-message" role="alert">
                 Az ültetés dátuma kötelező és nem lehet jövőbeli
               </span>
             }
@@ -87,6 +102,11 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
               placeholder="pl. Erkély, Kert, Ablakpárkány"
               class="form-input"
               list="location-suggestions"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              [attr.aria-expanded]="existingLocations.length > 0"
+              aria-controls="location-suggestions"
             />
             <datalist id="location-suggestions">
               @for (location of existingLocations; track location) {
@@ -109,8 +129,8 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
           </div>
 
           @if (isLoading()) {
-            <div class="loading-indicator">
-              <div class="spinner"></div>
+            <div class="loading-indicator" role="status" aria-live="polite">
+              <div class="spinner" aria-hidden="true"></div>
               <p class="loading-text">
                 {{ loadingMessage() }}
               </p>
@@ -118,8 +138,8 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
           }
 
           @if (errorMessage()) {
-            <div class="error-alert">
-              <span class="error-icon">⚠️</span>
+            <div class="error-alert" role="alert" aria-live="assertive">
+              <span class="error-icon" aria-hidden="true">⚠️</span>
               <span>{{ errorMessage() }}</span>
             </div>
           }
@@ -130,6 +150,7 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
               (click)="onCancel()"
               class="btn btn-secondary"
               [disabled]="isLoading()"
+              aria-label="Adatok módosításának elvetése"
             >
               Mégse
             </button>
@@ -137,9 +158,10 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
               type="submit"
               class="btn btn-primary"
               [disabled]="plantForm.invalid || isLoading()"
+              [attr.aria-label]="isEditMode() ? 'Növény adatainak mentése' : 'Új növény hozzáadása'"
             >
               @if (isLoading()) {
-                <span class="btn-spinner"></span>
+                <span class="btn-spinner" role="status" aria-label="Betöltés folyamatban"></span>
               }
               {{ isEditMode() ? 'Mentés' : 'Hozzáadás' }}
             </button>
@@ -148,7 +170,7 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
 
 
       </div>
-    </div>
+    </main>
   `,
   styles: [`
     .form-container {
@@ -220,12 +242,22 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
       box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
     }
 
+    .form-input:focus-visible {
+      outline: 3px solid #2d6a4f;
+      outline-offset: 2px;
+      border-color: #2d6a4f;
+    }
+
     .form-input.error {
       border-color: #dc3545;
     }
 
     .form-input.error:focus {
       box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    }
+
+    .form-input.error:focus-visible {
+      outline-color: #dc3545;
     }
 
     textarea.form-input {
@@ -312,6 +344,11 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
       transform: translateY(-2px);
     }
 
+    .btn:focus-visible {
+      outline: 3px solid #2d6a4f;
+      outline-offset: 3px;
+    }
+
     .btn-primary {
       background: #2d6a4f;
       color: white;
@@ -328,6 +365,10 @@ import { Plant, PlantFormData } from '../../core/models/plant.model';
 
     .btn-secondary:not(:disabled):hover {
       background: #e0e0e0;
+    }
+
+    .btn-secondary:focus-visible {
+      outline-color: #333;
     }
 
     .btn-spinner {

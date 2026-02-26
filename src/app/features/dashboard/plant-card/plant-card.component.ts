@@ -8,74 +8,80 @@ import { Plant, PlantStatus } from '../../../core/models/plant.model';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="plant-card" [routerLink]="['/plants', plant.id]">
-      <div class="plant-image" [style.backgroundImage]="imageUrl">
-        @if (!plant.imageUrl) {
-          <div class="placeholder-icon">🌱</div>
-        }
-      </div>
-      
-      <div class="plant-content">
-        <div class="plant-header">
-          <h3 class="plant-name">{{ plant.name }}</h3>
-          @if (plant.variety) {
-            <span class="plant-variety">{{ plant.variety }}</span>
+    <article class="plant-card">
+      <a 
+        [routerLink]="['/plants', plant.id]" 
+        class="plant-card-link"
+        [attr.aria-label]="getCardAriaLabel()"
+      >
+        <div class="plant-image" [style.backgroundImage]="imageUrl">
+          @if (!plant.imageUrl) {
+            <div class="placeholder-icon" aria-hidden="true">🌱</div>
           }
         </div>
-
-        <div class="plant-meta">
-          <div class="meta-item">
-            <span class="meta-icon">📅</span>
-            <span class="meta-text">Ültetve: {{ plant.plantedDate | date: 'yyyy. MM. dd.' }}</span>
+        
+        <div class="plant-content">
+          <div class="plant-header">
+            <h3 class="plant-name">{{ plant.name }}</h3>
+            @if (plant.variety) {
+              <span class="plant-variety">{{ plant.variety }}</span>
+            }
           </div>
 
-          @if (daysUntilHarvest !== null) {
-            <div class="meta-item harvest">
-              <span class="meta-icon">⏳</span>
-              <span class="meta-text">
-                @if (daysUntilHarvest === 0) {
-                  <strong>Szedésre kész!</strong>
-                } @else if (daysUntilHarvest > 0) {
-                  {{ daysUntilHarvest }} nap a szedésig
-                } @else {
-                  Szedési időszak lejárt
-                }
-              </span>
-            </div>
-          }
-
-          @if (plant.aiData) {
+          <div class="plant-meta">
             <div class="meta-item">
-              <span class="meta-icon">💧</span>
-              <span class="meta-text">{{ plant.aiData.waterNeeds.frequency }}</span>
+              <span class="meta-icon" aria-hidden="true">📅</span>
+              <span class="meta-text">Ültetve: {{ plant.plantedDate | date: 'yyyy. MM. dd.' }}</span>
             </div>
 
-            <div class="meta-item">
-              <span class="meta-icon">☀️</span>
-              <span class="meta-text">{{ plant.aiData.sunNeeds.category }}</span>
-            </div>
-          }
+            @if (daysUntilHarvest !== null) {
+              <div class="meta-item harvest">
+                <span class="meta-icon" aria-hidden="true">⏳</span>
+                <span class="meta-text">
+                  @if (daysUntilHarvest === 0) {
+                    <strong>Szedésre kész!</strong>
+                  } @else if (daysUntilHarvest > 0) {
+                    {{ daysUntilHarvest }} nap a szedésig
+                  } @else {
+                    Szedési időszak lejárt
+                  }
+                </span>
+              </div>
+            }
 
-          @if (plant.location) {
-            <div class="meta-item">
-              <span class="meta-icon">📍</span>
-              <span class="meta-text">{{ plant.location }}</span>
-            </div>
-          }
-        </div>
+            @if (plant.aiData) {
+              <div class="meta-item">
+                <span class="meta-icon" aria-hidden="true">💧</span>
+                <span class="meta-text">{{ plant.aiData.waterNeeds.frequency }}</span>
+              </div>
 
-        @if (nextTask) {
-          <div class="next-task">
-            <span class="task-icon">🔔</span>
-            <span class="task-text">{{ nextTask }}</span>
+              <div class="meta-item">
+                <span class="meta-icon" aria-hidden="true">☀️</span>
+                <span class="meta-text">{{ plant.aiData.sunNeeds.category }}</span>
+              </div>
+            }
+
+            @if (plant.location) {
+              <div class="meta-item">
+                <span class="meta-icon" aria-hidden="true">📍</span>
+                <span class="meta-text">{{ plant.location }}</span>
+              </div>
+            }
           </div>
-        }
 
-        <div class="status-badge" [class]="statusClass">
-          {{ status }}
+          @if (nextTask) {
+            <div class="next-task">
+              <span class="task-icon" aria-hidden="true">🔔</span>
+              <span class="task-text">{{ nextTask }}</span>
+            </div>
+          }
+
+          <div class="status-badge" [class]="statusClass">
+            {{ status }}
+          </div>
         </div>
-      </div>
-    </div>
+      </a>
+    </article>
   `,
   styles: [`
     .plant-card {
@@ -83,16 +89,37 @@ import { Plant, PlantStatus } from '../../../core/models/plant.model';
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
       height: 100%;
       display: flex;
       flex-direction: column;
     }
 
-    .plant-card:hover {
+    .plant-card-link {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .plant-card-link:hover {
       transform: translateY(-4px);
+    }
+
+    .plant-card:has(.plant-card-link:hover) {
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .plant-card-link:focus {
+      outline: none;
+    }
+
+    .plant-card-link:focus-visible {
+      outline: 3px solid #2d6a4f;
+      outline-offset: 3px;
+      border-radius: 12px;
     }
 
     .plant-image {
@@ -258,5 +285,29 @@ export class PlantCardComponent {
     }
 
     return null;
+  }
+
+  getCardAriaLabel(): string {
+    let label = `${this.plant.name}`;
+    
+    if (this.plant.variety) {
+      label += `, ${this.plant.variety}`;
+    }
+    
+    label += `. Státusz: ${this.status}`;
+    
+    if (this.daysUntilHarvest !== null) {
+      if (this.daysUntilHarvest === 0) {
+        label += '. Szedésre kész!';
+      } else if (this.daysUntilHarvest > 0) {
+        label += `. ${this.daysUntilHarvest} nap a szedésig`;
+      }
+    }
+    
+    if (this.plant.location) {
+      label += `. Helyszín: ${this.plant.location}`;
+    }
+    
+    return label + '. Kattintson a részletekhez';
   }
 }
