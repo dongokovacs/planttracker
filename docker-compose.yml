@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  playwright-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: planttracker-playwright:latest
+    container_name: planttracker-tests
+    volumes:
+      # Test results kimenet a host gépen
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+    environment:
+      - CI=true
+    # Ha szeretnéd látni a futást
+    # command: npx playwright test --reporter=html,list

@@ -1,0 +1,32 @@
+# Node modules
+node_modules/
+npm-debug.log
+
+# Build outputs
+dist/
+coverage/
+test-results/
+playwright-report/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Misc
+*.md
+!README.md

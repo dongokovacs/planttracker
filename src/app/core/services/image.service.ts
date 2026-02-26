@@ -58,6 +58,7 @@ export class ImageService {
     'répa': '/images/sargarépa.jpg',
     'repa': '/images/sargarépa.jpg',
     'hagyma': '/images/hagyma.jpg',
+    'fokhagyma': '/images/fokhagyma.jpg',
     'petrezselyem': '/images/petrezselyem.jpg',
     'zeller': '/images/petrezselyem.jpg',
     'spenót': '/images/spenót.jpg',
@@ -65,7 +66,11 @@ export class ImageService {
     'brokkoli': '/images/brokkoli.jpg',
     'karfiol': '/images/karfiol.jpg',
     'kelbimbó': '/images/kelbimbó.jpg',
-    'kelbimbo': '/images/kelbimbo.jpg'
+    'kelbimbo': '/images/kelbimbo.jpg',
+    'tök': '/images/tok.jpg',
+    'tok': '/images/tok.jpg',
+    'sütőtök': '/images/tok.jpg',
+    'sutotok': '/images/tok.jpg'
   };
 
   constructor(private http: HttpClient) {}
@@ -116,10 +121,30 @@ export class ImageService {
 
   /**
    * Get local image for a plant if available
+   * Supports partial matching: "fokhagyma 4 gerezd" matches "fokhagyma"
    */
   private getLocalImage(plantName: string): string | null {
     const normalizedName = plantName.toLowerCase().trim();
-    return this.LOCAL_IMAGES[normalizedName] || null;
+    
+    // 1. Try exact match first
+    if (this.LOCAL_IMAGES[normalizedName]) {
+      return this.LOCAL_IMAGES[normalizedName];
+    }
+    
+    // 2. Try first word only (e.g., "fokhagyma 4 gerezd" -> "fokhagyma")
+    const firstWord = normalizedName.split(/\s+/)[0];
+    if (firstWord && this.LOCAL_IMAGES[firstWord]) {
+      return this.LOCAL_IMAGES[firstWord];
+    }
+    
+    // 3. Try partial match (find if any key is contained in the plant name)
+    for (const key of Object.keys(this.LOCAL_IMAGES)) {
+      if (normalizedName.includes(key)) {
+        return this.LOCAL_IMAGES[key];
+      }
+    }
+    
+    return null;
   }
 
   /**
