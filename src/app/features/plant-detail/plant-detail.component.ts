@@ -750,7 +750,7 @@ export class PlantDetailComponent implements OnInit {
     this.isDeleting.set(true);
     const p = this.plant();
     if (p) {
-      const success = this.plantService.deletePlant(p.id);
+      const success = await this.plantService.deletePlant(p.id);
       if (success) {
         this.notificationService.success('Növény sikeresen törölve');
         this.router.navigate(['/dashboard']);

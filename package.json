@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "playwright:test": "npx playwright test",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -30,6 +31,7 @@
     "@angular/forms": "^21.1.0",
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
+    "dexie": "^4.3.0",
     "dotenv": "^17.3.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
@@ -43,6 +45,7 @@
     "@types/node": "^25.3.0",
     "jsdom": "^27.1.0",
     "playwright-code-coverage": "^0.0.3",
+    "playwright-smart-reporter": "^1.3.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

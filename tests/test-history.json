@@ -1,0 +1,142 @@
+{
+  "runs": [],
+  "tests": {
+    "[chromium] plant-management.spec.ts::keresés működése": [
+      {
+        "passed": true,
+        "duration": 1911,
+        "timestamp": "2026-02-27T07:07:10.273Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 6790,
+        "timestamp": "2026-02-27T07:08:54.744Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 1042,
+        "timestamp": "2026-02-27T07:11:12.200Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 6647,
+        "timestamp": "2026-02-27T07:30:27.206Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 918,
+        "timestamp": "2026-02-27T07:33:56.771Z",
+        "skipped": false,
+        "retry": 0
+      }
+    ],
+    "[chromium] plant-management.spec.ts::szűrés helyszín szerint": [
+      {
+        "passed": true,
+        "duration": 744,
+        "timestamp": "2026-02-27T07:07:10.273Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": true,
+        "duration": 6794,
+        "timestamp": "2026-02-27T07:08:54.744Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": false,
+        "duration": 5515,
+        "timestamp": "2026-02-27T07:11:12.200Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": false,
+        "duration": 11184,
+        "timestamp": "2026-02-27T07:30:27.206Z",
+        "skipped": false,
+        "retry": 0
+      },
+      {
+        "passed": false,
+        "duration": 5489,
+        "timestamp": "2026-02-27T07:33:56.771Z",
+        "skipped": false,
+        "retry": 0
+      }
+    ]
+  },
+  "summaries": [
+    {
+      "runId": "run-1772176026127",
+      "timestamp": "2026-02-27T07:07:06.127Z",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "slow": 0,
+      "duration": 4145,
+      "passRate": 100
+    },
+    {
+      "runId": "run-1772176126382",
+      "timestamp": "2026-02-27T07:08:46.382Z",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "slow": 2,
+      "duration": 8361,
+      "passRate": 100
+    },
+    {
+      "runId": "run-1772176265431",
+      "timestamp": "2026-02-27T07:11:05.431Z",
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "slow": 1,
+      "duration": 6768,
+      "passRate": 50
+    },
+    {
+      "runId": "run-1772177414705",
+      "timestamp": "2026-02-27T07:30:14.705Z",
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "slow": 2,
+      "duration": 12501,
+      "passRate": 50
+    },
+    {
+      "runId": "run-1772177630059",
+      "timestamp": "2026-02-27T07:33:50.059Z",
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "slow": 0,
+      "duration": 6712,
+      "passRate": 50
+    }
+  ],
+  "runFiles": {}
+}

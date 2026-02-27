@@ -1,12 +1,14 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Plant, PlantFormData, PlantStatus } from '../models/plant.model';
 import { v4 as uuidv4 } from 'uuid';
+import { db } from './database.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PlantService {
   private readonly STORAGE_KEY = 'planttracker_plants';
+  private migrationDone = false;
   
   // Signal-based state management
   private plantsSignal = signal<Plant[]>([]);
@@ -17,41 +19,44 @@ export class PlantService {
   plantsCount = computed(() => this.plantsSignal().length);
   
   constructor() {
-    this.loadFromStorage();
+    this.initializeDatabase();
   }
 
   /**
-   * Load plants from localStorage
+   * Initialize database and migrate from localStorage if needed
    */
-  private loadFromStorage(): void {
+  private async initializeDatabase(): Promise<void> {
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      if (stored) {
-        const plants = JSON.parse(stored) as Plant[];
-        // Convert date strings back to Date objects
-        plants.forEach(plant => {
-          plant.plantedDate = new Date(plant.plantedDate);
-          plant.createdAt = new Date(plant.createdAt);
-          plant.updatedAt = new Date(plant.updatedAt);
-          if (plant.aiData?.fetchedAt) {
-            plant.aiData.fetchedAt = new Date(plant.aiData.fetchedAt);
-          }
-        });
-        this.plantsSignal.set(plants);
+      // Check if this is first run (no data in IndexedDB)
+      const existingPlants = await db.getAllPlants();
+      
+      if (existingPlants.length === 0 && !this.migrationDone) {
+        // Try to import from localStorage
+        const imported = await db.importFromLocalStorage(this.STORAGE_KEY);
+        if (imported > 0) {
+          console.log(`✅ Migrated ${imported} plants from localStorage to IndexedDB`);
+          // Remove from localStorage after successful migration
+          localStorage.removeItem(this.STORAGE_KEY);
+        }
+        this.migrationDone = true;
       }
+      
+      // Load all plants into signal
+      await this.refreshPlants();
     } catch (error) {
-      console.error('Error loading plants from storage:', error);
+      console.error('Error initializing database:', error);
     }
   }
 
   /**
-   * Save plants to localStorage
+   * Refresh plants from database to signal
    */
-  private saveToStorage(): void {
+  private async refreshPlants(): Promise<void> {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.plantsSignal()));
+      const plants = await db.getAllPlants();
+      this.plantsSignal.set(plants);
     } catch (error) {
-      console.error('Error saving plants to storage:', error);
+      console.error('Error refreshing plants:', error);
     }
   }
 
@@ -72,7 +77,7 @@ export class PlantService {
   /**
    * Add new plant
    */
-  addPlant(formData: PlantFormData): Plant {
+  async addPlant(formData: PlantFormData): Promise<Plant> {
     const newPlant: Plant = {
       id: uuidv4(),
       ...formData,
@@ -80,73 +85,78 @@ export class PlantService {
       updatedAt: new Date()
     };
     
-    this.plantsSignal.update(plants => [...plants, newPlant]);
-    this.saveToStorage();
-    
-    return newPlant;
+    try {
+      await db.addPlant(newPlant);
+      await this.refreshPlants();
+      console.log('✅ Plant added to IndexedDB:', newPlant.name);
+      return newPlant;
+    } catch (error) {
+      console.error('Error adding plant:', error);
+      throw error;
+    }
   }
 
   /**
    * Update existing plant
    */
-  updatePlant(id: string, updates: Partial<PlantFormData>): Plant | null {
-    const plantIndex = this.plantsSignal().findIndex(p => p.id === id);
-    
-    if (plantIndex === -1) {
-      return null;
-    }
-    
-    this.plantsSignal.update(plants => {
-      const updatedPlants = [...plants];
-      updatedPlants[plantIndex] = {
-        ...updatedPlants[plantIndex],
+  async updatePlant(id: string, updates: Partial<PlantFormData>): Promise<Plant | null> {
+    try {
+      const updateData = {
         ...updates,
         updatedAt: new Date()
       };
-      return updatedPlants;
-    });
-    
-    this.saveToStorage();
-    return this.plantsSignal()[plantIndex];
+      
+      const updated = await db.updatePlant(id, updateData);
+      
+      if (updated === 0) {
+        return null;
+      }
+      
+      await this.refreshPlants();
+      const plant = this.getPlantById(id);
+      console.log('✅ Plant updated in IndexedDB:', plant?.name);
+      return plant || null;
+    } catch (error) {
+      console.error('Error updating plant:', error);
+      throw error;
+    }
   }
 
   /**
    * Update plant AI data
    */
-  updatePlantAIData(id: string, aiData: Plant['aiData']): Plant | null {
-    const plantIndex = this.plantsSignal().findIndex(p => p.id === id);
-    
-    if (plantIndex === -1) {
-      return null;
-    }
-    
-    this.plantsSignal.update(plants => {
-      const updatedPlants = [...plants];
-      updatedPlants[plantIndex] = {
-        ...updatedPlants[plantIndex],
+  async updatePlantAIData(id: string, aiData: Plant['aiData']): Promise<Plant | null> {
+    try {
+      const updated = await db.updatePlant(id, {
         aiData,
         updatedAt: new Date()
-      };
-      return updatedPlants;
-    });
-    
-    this.saveToStorage();
-    return this.plantsSignal()[plantIndex];
+      });
+      
+      if (updated === 0) {
+        return null;
+      }
+      
+      await this.refreshPlants();
+      return this.getPlantById(id) || null;
+    } catch (error) {
+      console.error('Error updating plant AI data:', error);
+      throw error;
+    }
   }
 
   /**
    * Delete plant
    */
-  deletePlant(id: string): boolean {
-    const initialLength = this.plantsSignal().length;
-    this.plantsSignal.update(plants => plants.filter(p => p.id !== id));
-    
-    if (this.plantsSignal().length < initialLength) {
-      this.saveToStorage();
+  async deletePlant(id: string): Promise<boolean> {
+    try {
+      await db.deletePlant(id);
+      await this.refreshPlants();
+      console.log('✅ Plant deleted from IndexedDB');
       return true;
+    } catch (error) {
+      console.error('Error deleting plant:', error);
+      return false;
     }
-    
-    return false;
   }
 
   /**

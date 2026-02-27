@@ -22,7 +22,14 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['html'], ['list']],
+  reporter: [
+    ['html'],
+    ['playwright-smart-reporter', {
+      outputFile: 'smart-report.html',
+      title: 'My Test Suite',
+    }],
+    ['./tests/reporters/ai-bug-analyzer-reporter.ts']  // 🤖 AI Bug Analyzer
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
@@ -39,12 +46,4 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:4200',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
 });

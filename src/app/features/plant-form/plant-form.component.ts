@@ -529,7 +529,7 @@ export class PlantFormComponent implements OnInit {
       if (this.isEditMode() && this.plantId) {
         // Update existing plant
         this.loadingMessage.set('Növény frissítése...');
-        const updatedPlant = this.plantService.updatePlant(this.plantId, formData);
+        const updatedPlant = await this.plantService.updatePlant(this.plantId, formData);
         
         if (updatedPlant) {
           this.notificationService.success('Növény sikeresen frissítve!');
@@ -540,7 +540,7 @@ export class PlantFormComponent implements OnInit {
       } else {
         // Add new plant
         this.loadingMessage.set('Növény hozzáadása...');
-        const newPlant = this.plantService.addPlant(formData);
+        const newPlant = await this.plantService.addPlant(formData);
 
         // Fetch image
         this.loadingMessage.set('Növény kép keresése...');
@@ -551,11 +551,11 @@ export class PlantFormComponent implements OnInit {
           ).toPromise();
           
           if (imageUrl) {
-            this.plantService.updatePlant(newPlant.id, { ...formData } as any);
+            await this.plantService.updatePlant(newPlant.id, { ...formData } as any);
             const plant = this.plantService.getPlantById(newPlant.id);
             if (plant) {
               plant.imageUrl = imageUrl;
-              this.plantService.updatePlantAIData(newPlant.id, plant.aiData);
+              await this.plantService.updatePlantAIData(newPlant.id, plant.aiData);
             }
           }
         } catch (imageError) {
