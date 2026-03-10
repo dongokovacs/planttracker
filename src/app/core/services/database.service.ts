@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { Plant } from '../models/plant.model';
+import { Plant, Review } from '../models/plant.model';
 
 /**
  * PlantTracker Database Service using Dexie.js (IndexedDB wrapper)
@@ -12,6 +12,7 @@ import { Plant } from '../models/plant.model';
  */
 export class PlantDatabase extends Dexie {
   plants!: Table<Plant, string>; // string = id type
+  reviews!: Table<Review, string>; // string = id type
 
   constructor() {
     super('PlantTrackerDB');
@@ -19,6 +20,12 @@ export class PlantDatabase extends Dexie {
     // Define database schema
     this.version(1).stores({
       plants: 'id, name, location, status, plantedDate, createdAt' // indexed fields
+    });
+
+    // Version 2: add reviews table
+    this.version(2).stores({
+      plants: 'id, name, location, status, plantedDate, createdAt',
+      reviews: 'id, plantId, rating, createdAt' // indexed fields
     });
   }
 
@@ -135,6 +142,53 @@ export class PlantDatabase extends Dexie {
       console.error('Error importing from localStorage:', error);
       return 0;
     }
+  }
+
+  // ─── Review Methods ───────────────────────────────────────────────────────
+
+  /**
+   * Get all reviews for a plant
+   */
+  async getReviewsByPlantId(plantId: string): Promise<Review[]> {
+    return await this.reviews
+      .where('plantId')
+      .equals(plantId)
+      .sortBy('createdAt');
+  }
+
+  /**
+   * Get review by ID
+   */
+  async getReviewById(id: string): Promise<Review | undefined> {
+    return await this.reviews.get(id);
+  }
+
+  /**
+   * Add a new review
+   */
+  async addReview(review: Review): Promise<string> {
+    return await this.reviews.add(review);
+  }
+
+  /**
+   * Update a review
+   */
+  async updateReview(id: string, updates: Partial<Review>): Promise<number> {
+    return await this.reviews.update(id, updates);
+  }
+
+  /**
+   * Delete a review
+   */
+  async deleteReview(id: string): Promise<void> {
+    await this.reviews.delete(id);
+  }
+
+  /**
+   * Delete all reviews for a plant
+   */
+  async deleteReviewsByPlantId(plantId: string): Promise<void> {
+    await this.reviews.where('plantId').equals(plantId).delete();
   }
 }
 

@@ -66,3 +66,23 @@ export enum PlantStatus {
   MATURING = 'érlel',
   READY_TO_HARVEST = 'szedésre kész'
 }
+
+// Review model for plant reviews
+export interface Review {
+  id: string;
+  plantId: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  title: string;
+  content: string;
+  authorName: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// DTO for creating/updating reviews
+export interface ReviewFormData {
+  rating: 1 | 2 | 3 | 4 | 5;
+  title: string;
+  content: string;
+  authorName: string;
+}
