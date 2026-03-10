@@ -1,15 +1,18 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { PlantService } from '../../core/services/plant.service';
 import { NotificationService } from '../../core/services/notification.service';
-import { Plant, PlantStatus } from '../../core/models/plant.model';
+import { ReviewService } from '../../core/services/review.service';
+import { Plant, PlantStatus, Review, ReviewFormData } from '../../core/models/plant.model';
 import { LoadingSkeletonComponent } from '../../shared/components/loading-skeleton/loading-skeleton.component';
+import { ReviewFormComponent } from './review-form/review-form.component';
+import { ReviewListComponent } from './review-list/review-list.component';
 
 @Component({
   selector: 'app-plant-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, LoadingSkeletonComponent],
+  imports: [CommonModule, RouterLink, LoadingSkeletonComponent, ReviewFormComponent, ReviewListComponent],
   template: `
     <div class="detail-container">
       @if (isLoading()) {
@@ -99,6 +102,45 @@ import { LoadingSkeletonComponent } from '../../shared/components/loading-skelet
               <p class="notes-text">{{ plant()!.notes }}</p>
             </div>
           }
+
+          <!-- Reviews Section -->
+          <div class="reviews-section">
+            <div class="reviews-header">
+              <div class="reviews-title-row">
+                <h3 class="section-title">⭐ Értékelések</h3>
+                @if (averageRating() !== null) {
+                  <div class="average-badge" [attr.aria-label]="'Átlagos értékelés: ' + averageRating() + '/5'">
+                    <span class="avg-star" aria-hidden="true">★</span>
+                    <span class="avg-value">{{ averageRating() }}</span>
+                    <span class="avg-count">({{ reviewCount() }} értékelés)</span>
+                  </div>
+                }
+              </div>
+              @if (!showReviewForm()) {
+                <button class="btn btn-add-review" (click)="showReviewForm.set(true)">
+                  + Értékelés hozzáadása
+                </button>
+              }
+            </div>
+
+            @if (showReviewForm()) {
+              <div class="review-form-container">
+                <app-review-form
+                  [plantId]="plant()!.id"
+                  [editReview]="editingReview()"
+                  (submitted)="onReviewSubmit($event)"
+                  (cancelled)="onReviewCancel()"
+                ></app-review-form>
+              </div>
+            }
+
+            <app-review-list
+              [reviews]="reviews()"
+              [showActions]="true"
+              (editClicked)="onEditReview($event)"
+              (deleteClicked)="onDeleteReview($event)"
+            ></app-review-list>
+          </div>
         </div>
       } @else {
         <div class="error-state">
@@ -319,6 +361,82 @@ import { LoadingSkeletonComponent } from '../../shared/components/loading-skelet
       color: #555;
       line-height: 1.6;
       white-space: pre-wrap;
+    }
+
+    /* Reviews */
+    .reviews-section {
+      padding: 2rem;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .reviews-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .reviews-title-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .average-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 20px;
+      padding: 0.25rem 0.875rem;
+      font-size: 0.9375rem;
+    }
+
+    .avg-star {
+      color: #f4a261;
+      font-size: 1.125rem;
+      line-height: 1;
+    }
+
+    .avg-value {
+      font-weight: 700;
+      color: #333;
+    }
+
+    .avg-count {
+      color: #888;
+      font-size: 0.8125rem;
+    }
+
+    .btn-add-review {
+      background: #2d6a4f;
+      color: white;
+      border: none;
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-add-review:hover {
+      background: #1e4d36;
+      transform: translateY(-2px);
+    }
+
+    .btn-add-review:focus-visible {
+      outline: 3px solid #2d6a4f;
+      outline-offset: 3px;
+    }
+
+    .review-form-container {
+      margin-bottom: 1.5rem;
     }
 
     .ai-section {
@@ -659,7 +777,8 @@ import { LoadingSkeletonComponent } from '../../shared/components/loading-skelet
 
       .info-grid,
       .needs-grid,
-      .ai-section {
+      .ai-section,
+      .reviews-section {
         padding: 1.5rem 1rem;
       }
 
@@ -677,11 +796,19 @@ export class PlantDetailComponent implements OnInit {
   daysUntilHarvest = signal<number | null>(null);
   harvestProgress = 0;
 
+  // Review state
+  showReviewForm = signal(false);
+  editingReview = signal<Review | null>(null);
+  reviews = signal<Review[]>([]);
+  averageRating = computed(() => this.reviewService.getAverageRating(this.plant()?.id ?? ''));
+  reviewCount = computed(() => this.reviewService.getReviewCount(this.plant()?.id ?? ''));
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private plantService: PlantService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private reviewService: ReviewService
   ) {}
 
   ngOnInit(): void {
@@ -713,16 +840,68 @@ export class PlantDetailComponent implements OnInit {
   }
 
   private loadPlant(id: string): void {
-    setTimeout(() => {
+    setTimeout(async () => {
       const foundPlant = this.plantService.getPlantById(id);
       if (foundPlant) {
         this.plant.set(foundPlant);
         this.status.set(this.plantService.getPlantStatus(foundPlant));
         this.daysUntilHarvest.set(this.plantService.getDaysUntilHarvest(foundPlant));
         this.calculateHarvestProgress();
+        // Load reviews
+        const loaded = await this.reviewService.loadReviewsForPlant(id);
+        this.reviews.set(loaded);
       }
       this.isLoading.set(false);
     }, 300);
+  }
+
+  // ─── Review Handlers ──────────────────────────────────────────────────────
+
+  async onReviewSubmit(formData: ReviewFormData): Promise<void> {
+    const p = this.plant();
+    if (!p) return;
+
+    try {
+      const editing = this.editingReview();
+      if (editing) {
+        await this.reviewService.updateReview(editing.id, p.id, formData);
+        this.notificationService.success('Értékelés sikeresen frissítve!');
+      } else {
+        await this.reviewService.addReview(p.id, formData);
+        this.notificationService.success('Értékelés sikeresen hozzáadva!');
+      }
+      // Refresh local signal
+      this.reviews.set(this.reviewService.getReviewsForPlant(p.id));
+    } catch {
+      this.notificationService.error('Hiba történt az értékelés mentésekor.');
+    } finally {
+      this.showReviewForm.set(false);
+      this.editingReview.set(null);
+    }
+  }
+
+  onReviewCancel(): void {
+    this.showReviewForm.set(false);
+    this.editingReview.set(null);
+  }
+
+  onEditReview(review: Review): void {
+    this.editingReview.set(review);
+    this.showReviewForm.set(true);
+  }
+
+  async onDeleteReview(review: Review): Promise<void> {
+    if (!confirm('Biztosan törölni szeretnéd ezt az értékelést?')) return;
+    const p = this.plant();
+    if (!p) return;
+
+    const success = await this.reviewService.deleteReview(review.id, p.id);
+    if (success) {
+      this.reviews.set(this.reviewService.getReviewsForPlant(p.id));
+      this.notificationService.success('Értékelés törölve.');
+    } else {
+      this.notificationService.error('Hiba történt a törlés során.');
+    }
   }
 
   private calculateHarvestProgress(): void {

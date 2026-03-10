@@ -8,3 +8,4 @@ export { PlantService } from './plant.service';
 export { ImageService } from './image.service';
 export { NotificationService } from './notification.service';
 export { PlantDatabase, db } from './database.service';
+export { ReviewService } from './review.service';
