@@ -3,26 +3,19 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const toBool = (v) => v === '1' || v === 'true' || v === 'yes';
-
-const required = (key) => {
-  const v = process.env[key];
-  if (!v) throw new Error(`Missing env var: ${key}`);
-  return v;
-};
-
-const useSsl = toBool(process.env.MYSQL_SSL ?? '');
-
-export const pool = mysql.createPool({
-  host: required('MYSQL_HOST'),
-  port: Number(process.env.MYSQL_PORT ?? 3306),
-  user: required('MYSQL_USER'),
-  password: required('MYSQL_PASSWORD'),
-  database: required('MYSQL_DATABASE'),
+const pool = mysql.createPool({
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: Number(process.env.MYSQL_PORT) || 3306,
   waitForConnections: true,
-  connectionLimit: Number(process.env.MYSQL_CONNECTION_LIMIT ?? 10),
-  namedPlaceholders: true,
-  timezone: 'Z',
-  ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+  connectionLimit: Number(process.env.MYSQL_CONNECTION_LIMIT) || 10,
+  queueLimit: 0,
+  // Filess.io és más felhős szolgáltatók esetén ez kötelező:
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
+export default pool;

@@ -3,7 +3,6 @@
 ## Table of Contents
 
 1. [GitHub Actions](#github-actions)
-2. [Docker](#docker)
 3. [Reporting](#reporting)
 4. [Sharding](#sharding)
 5. [Environment Management](#environment-management)
@@ -155,7 +154,7 @@ jobs:
           HOME: /root
 ```
 
-## Docker
+
 
 ### Dockerfile
 
@@ -171,42 +170,6 @@ COPY . .
 
 CMD ["npx", "playwright", "test"]
 ```
-
-### Docker Compose
-
-```yaml
-# docker-compose.yml
-version: "3.8"
-
-services:
-  playwright:
-    build: .
-    volumes:
-      - ./playwright-report:/app/playwright-report
-      - ./test-results:/app/test-results
-    environment:
-      - CI=true
-      - BASE_URL=http://app:3000
-    depends_on:
-      - app
-
-  app:
-    build: ./app
-    ports:
-      - "3000:3000"
-```
-
-### Run with Docker
-
-```bash
-# Build and run
-docker build -t playwright-tests .
-docker run --rm -v $(pwd)/playwright-report:/app/playwright-report playwright-tests
-
-# With docker-compose
-docker-compose run --rm playwright
-```
-
 ## Reporting
 
 ### Configuration
