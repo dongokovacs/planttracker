@@ -26,6 +26,15 @@ export default defineConfig({
     ['./tests/reporters/ai-bug-analyzer-reporter.ts']  // 🤖 AI Bug Analyzer
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  webServer: {
+    command: 'npm run start', // Vagy amivel indítod az appot (pl. 'ng serve')
+    url: 'http://localhost:4200',
+    reuseExistingServer: !process.env.CI,
+    stdout: 'ignore',
+    stderr: 'pipe',
+    timeout: 120 * 1000, // CI-n néha lassabb az indítás
+  },
+
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: 'http://localhost:4200',
@@ -33,6 +42,14 @@ export default defineConfig({
     actionTimeout: 6000,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+  },
+  webServer: {
+    command: 'npm run start', // Vagy amivel indítod az appot (pl. 'ng serve')
+    url: 'http://localhost:4200',
+    reuseExistingServer: !process.env.CI,
+    stdout: 'ignore',
+    stderr: 'pipe',
+    timeout: 120 * 1000, // CI-n néha lassabb az indítás
   },
 
   /* Configure projects for major browsers */
