@@ -40,11 +40,13 @@ import { LoadingSkeletonComponent } from '../../shared/components/loading-skelet
               <button
                 [routerLink]="['/plants', plant()!.id, 'edit']"
                 class="btn btn-secondary"
+                data-testid="edit"
               >
                 ✏️ Szerkesztés
               </button>
               <button
                 (click)="onDelete()"
+                data-testid="delete"
                 class="btn btn-danger"
                 [disabled]="isDeleting()"
               >

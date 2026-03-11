@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  unsplashApiKey: '',
+  apiBaseUrl: '/api',
 };
 
 // PRODUCTION SECURITY:

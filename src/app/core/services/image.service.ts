@@ -31,7 +31,6 @@ interface UnsplashSearchResponse {
   providedIn: 'root'
 })
 export class ImageService {
-  private readonly UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos';
   private readonly PLACEHOLDER_IMAGES = [
     '/images/plant-placeholder-1.jpg',
     '/images/plant-placeholder-2.jpg',
@@ -76,7 +75,7 @@ export class ImageService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Search for plant images (local first, then Unsplash)
+   * Search for plant images (local first, else placeholder)
    */
   searchPlantImage(plantName: string, variety?: string): Observable<string> {
     // First, check if we have a local image
@@ -86,37 +85,8 @@ export class ImageService {
       return of(localImage);
     }
 
-    // Check if API key is configured
-    if (!environment.unsplashApiKey) {
-      console.warn('Unsplash API key not configured, using placeholder');
-      return of(this.getRandomPlaceholder());
-    }
-
-    // Search on Unsplash
-    const headers = new HttpHeaders({
-      'Authorization': `Client-ID ${environment.unsplashApiKey}`
-    });
-
-    const searchQuery = variety ? `${plantName} ${variety} plant` : `${plantName} plant`;
-    const params = new HttpParams()
-      .set('query', searchQuery)
-      .set('per_page', '1')
-      .set('orientation', 'landscape');
-
-    return this.http.get<UnsplashSearchResponse>(this.UNSPLASH_API_URL, { headers, params }).pipe(
-      map(response => {
-        if (response.results.length > 0) {
-          // Return regular size image URL
-          return response.results[0].urls.regular;
-        }
-        // Fallback to placeholder if no results
-        return this.getRandomPlaceholder();
-      }),
-      catchError(error => {
-        console.error('Error fetching image from Unsplash:', error);
-        return of(this.getRandomPlaceholder());
-      })
-    );
+    // If no local image, just return a random placeholder (no remote API call)
+    return of(this.getRandomPlaceholder());
   }
 
   /**

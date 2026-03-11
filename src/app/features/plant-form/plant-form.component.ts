@@ -542,7 +542,7 @@ export class PlantFormComponent implements OnInit {
         this.loadingMessage.set('Növény hozzáadása...');
         const newPlant = await this.plantService.addPlant(formData);
 
-        // Fetch image
+        // Fetch image and save it to the plant
         this.loadingMessage.set('Növény kép keresése...');
         try {
           const imageUrl = await this.imageService.searchPlantImage(
@@ -551,12 +551,7 @@ export class PlantFormComponent implements OnInit {
           ).toPromise();
           
           if (imageUrl) {
-            await this.plantService.updatePlant(newPlant.id, { ...formData } as any);
-            const plant = this.plantService.getPlantById(newPlant.id);
-            if (plant) {
-              plant.imageUrl = imageUrl;
-              await this.plantService.updatePlantAIData(newPlant.id, plant.aiData);
-            }
+            await this.plantService.updatePlant(newPlant.id, { imageUrl } as any);
           }
         } catch (imageError) {
           console.warn('Image fetch failed, continuing without image:', imageError);

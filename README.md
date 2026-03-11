@@ -1,4 +1,87 @@
-﻿#  PlantTracker
+## PlantTracker
+
+### Fejlesztés (Angular + Node + MySQL)
+
+#### 1) MySQL (Docker)
+
+```bash
+docker compose up -d
+```
+
+#### 2) Backend (Node/Express)
+
+```bash
+cd server
+copy .env.example .env
+npm install
+npm run dev
+```
+
+Backend API: `http://localhost:3001/api`
+
+#### 3) Frontend (Angular)
+
+```bash
+npm install
+npm start
+```
+
+Frontend: `http://localhost:4200/`
+
+---
+
+## Local Development (English)
+
+### 1) Prepare the remote MySQL database
+
+The app uses a remote MySQL database hosted on Filess:
+
+- DB panel: https://panel.filess.io/shared/list
+
+Make sure your `server/.env` is configured with your Filess connection data (host, user, password, database, SSL).
+
+Then, from the project root, run the DB init script **once** to create the `plants` table in the remote database:
+
+```bash
+cd server
+npm run db:init
+```
+
+You should see: `✅ MySQL schema ensured (plants table).`
+
+### 2) Start the backend (Node/Express)
+
+From the `server` folder:
+
+```bash
+cd server
+npm run dev
+```
+
+This starts the API on:
+
+- `http://localhost:3001/api`
+
+You can verify it with:
+
+- `http://localhost:3001/api/health`
+
+### 3) Start the frontend (Angular)
+
+From the project root:
+
+```bash
+npm install
+npm start
+```
+
+The Angular dev server will run on:
+
+- `http://localhost:4200/`
+
+The frontend talks to the local backend (`http://localhost:3001/api`), which in turn uses the **remote MySQL database on Filess**.
+
+#  PlantTracker
 
 Egy Angular-alapú növénykövető alkalmazás, amely segít nyomon követni a növények gondozását.
 

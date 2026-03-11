@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test-options';
 import { startCoverage, stopAndSaveCoverage } from './helpers/coverage';
 
 test.describe('Növény kezelés', () => {
@@ -47,5 +47,45 @@ test.describe('Növény kezelés', () => {
     const plantCards = page.getByRole('article');
     const count = await plantCards.count();
     expect(count).toBeGreaterThanOrEqual(0);
+  });
+
+  test.only('új zöldség felvétele és státusz ellenőrzése', async ({ page }) => {
+    // Arrange: nyitó oldal
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: /PlantTracker/i })).toBeVisible();
+
+    // Navigálás az "Új növény" űrlapra
+    await page.getByRole('link', { name: /Új növény hozzáadása/i }).click();
+    await expect(page.getByRole('heading', { name: /Új növény hozzáadása/i })).toBeVisible();
+
+    // Form kitöltése (retek, hogy legyen lokális kép is)
+    await page.getByLabel(/Növény neve/i).fill('retek');
+    await page.getByLabel(/Fajta \(opcionális\)/i).fill('teszt fajta');
+     //screen readers use labels so UI test use it
+    await page.getByLabel(/Ültetés dátuma/i).fill('2026-03-03');
+    //await page.getByRole('textbox', { name: 'Ültetés dátuma *' }).fill('2026-03-03');
+    await page.getByLabel(/Helyszín \(opcionális\)/i).fill('teszt ágyás');
+
+    // Submit
+    const saveRequest = page.waitForResponse((resp) =>
+      resp.url().includes('/api/plants') && resp.request().method() === 'POST' && resp.status() === 201
+    );
+    await page.getByRole('button', { name: /Hozzáadás/i }).click();
+    await saveRequest;
+
+    // Assert: átirányítás után megjelenik a növény részlete oldalon
+    await expect(page).toHaveURL(/\/plants\//);
+    await expect(page.getByRole('heading', { name: /retek/i })).toBeVisible();
+
+    // Vissza a dashboardra és státusz ellenőrzése
+    await page.getByRole('button', { name: '← Vissza' }).click();
+    await expect(page).toHaveURL(/\/dashboard|\/$/);
+
+    const retekCard = page
+      .getByRole('article')
+      .filter({ has: page.getByRole('heading', { name: /retek/i }) });
+
+    await expect(retekCard).not.toHaveCount(0);
+
   });
 });

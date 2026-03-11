@@ -69,6 +69,10 @@ class AIBugAnalyzerReporter implements Reporter {
     if (this.results.length > 0) {
       await this.generateHTMLReport();
       console.log(`\n📄 AI Analysis Report: playwright-report/ai-analysis.html`);
+
+      // Try to inject a global "Open AI analysis" button
+      // into Playwright's built-in HTML report.
+      await this.injectLinkIntoPlaywrightHtmlIndex();
     }
 
     console.log(`\n🎉 AI Bug Analyzer Reporter Complete`);
@@ -128,6 +132,13 @@ class AIBugAnalyzerReporter implements Reporter {
       fixes.push('Add aria-label to the element');
       fixes.push('Verify the element exists in the DOM');
       fixes.push('Use page.locator().waitFor() before interacting');
+
+      // Heuristics for common role/name mismatches (e.g. link vs button)
+      if (errorMessage.includes("getByRole('link'") || errorMessage.includes('getByRole("link"')) {
+        fixes.push(
+          'Check if the element is actually rendered as a <button> with the same accessible name – in that case use getByRole("button", { name: ... }) instead of "link".'
+        );
+      }
     }
 
     if (errorMessage.includes('asdf')) {
@@ -410,6 +421,51 @@ class AIBugAnalyzerReporter implements Reporter {
     }
 
     fs.writeFileSync(reportPath, html, 'utf-8');
+  }
+
+  /**
+   * Inject a fixed-position button into Playwright's built-in HTML report
+   * that opens the aggregated AI analysis report in a new tab.
+   */
+  private async injectLinkIntoPlaywrightHtmlIndex() {
+    const indexPath = path.join(process.cwd(), 'playwright-report', 'index.html');
+    const aiReportRelative = 'ai-analysis.html';
+
+    if (!fs.existsSync(indexPath)) {
+      return;
+    }
+
+    try {
+      const original = fs.readFileSync(indexPath, 'utf-8');
+
+      // Avoid injecting the button multiple times if the report is reused.
+      if (original.includes('Open AI bug analysis')) {
+        return;
+      }
+
+      const marker = "<div id='root'></div>";
+      if (!original.includes(marker)) {
+        return;
+      }
+
+      const buttonHtml = [
+        "    <div style=\"position:fixed;top:12px;right:12px;z-index:9999;\">",
+        "      <a href=\"" + aiReportRelative + "\" target=\"_blank\"",
+        "         style=\"background:#667eea;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,0.25);\">",
+        "        🤖 Open AI bug analysis",
+        "      </a>",
+        "    </div>"
+      ].join('\n');
+
+      const updated = original.replace(
+        marker,
+        `${buttonHtml}\n${marker}`
+      );
+
+      fs.writeFileSync(indexPath, updated, 'utf-8');
+    } catch (e) {
+      console.warn('AI reporter: failed to inject button into Playwright HTML report:', e);
+    }
   }
 }
 

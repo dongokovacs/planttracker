@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  unsplashApiKey: 'your_unsplash_api_key_here',
+  apiBaseUrl: 'http://localhost:3001/api',
 };
 
 // IMPORTANT SECURITY NOTE:

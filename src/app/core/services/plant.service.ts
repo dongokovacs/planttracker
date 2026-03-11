@@ -1,14 +1,15 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { Plant, PlantFormData, PlantStatus } from '../models/plant.model';
 import { v4 as uuidv4 } from 'uuid';
-import { db } from './database.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PlantService {
-  private readonly STORAGE_KEY = 'planttracker_plants';
-  private migrationDone = false;
+  private readonly apiUrl = `${environment.apiBaseUrl}/plants`;
   
   // Signal-based state management
   private plantsSignal = signal<Plant[]>([]);
@@ -18,34 +19,8 @@ export class PlantService {
   
   plantsCount = computed(() => this.plantsSignal().length);
   
-  constructor() {
-    this.initializeDatabase();
-  }
-
-  /**
-   * Initialize database and migrate from localStorage if needed
-   */
-  private async initializeDatabase(): Promise<void> {
-    try {
-      // Check if this is first run (no data in IndexedDB)
-      const existingPlants = await db.getAllPlants();
-      
-      if (existingPlants.length === 0 && !this.migrationDone) {
-        // Try to import from localStorage
-        const imported = await db.importFromLocalStorage(this.STORAGE_KEY);
-        if (imported > 0) {
-          console.log(`✅ Migrated ${imported} plants from localStorage to IndexedDB`);
-          // Remove from localStorage after successful migration
-          localStorage.removeItem(this.STORAGE_KEY);
-        }
-        this.migrationDone = true;
-      }
-      
-      // Load all plants into signal
-      await this.refreshPlants();
-    } catch (error) {
-      console.error('Error initializing database:', error);
-    }
+  constructor(private http: HttpClient) {
+    void this.refreshPlants();
   }
 
   /**
@@ -53,8 +28,8 @@ export class PlantService {
    */
   private async refreshPlants(): Promise<void> {
     try {
-      const plants = await db.getAllPlants();
-      this.plantsSignal.set(plants);
+      const plants = await firstValueFrom(this.http.get<Plant[]>(this.apiUrl));
+      this.plantsSignal.set(plants.map(this.hydratePlant));
     } catch (error) {
       console.error('Error refreshing plants:', error);
     }
@@ -86,10 +61,9 @@ export class PlantService {
     };
     
     try {
-      await db.addPlant(newPlant);
+      const created = await firstValueFrom(this.http.post<Plant>(this.apiUrl, this.dehydratePlant(newPlant)));
       await this.refreshPlants();
-      console.log('✅ Plant added to IndexedDB:', newPlant.name);
-      return newPlant;
+      return this.hydratePlant(created);
     } catch (error) {
       console.error('Error adding plant:', error);
       throw error;
@@ -101,21 +75,13 @@ export class PlantService {
    */
   async updatePlant(id: string, updates: Partial<PlantFormData>): Promise<Plant | null> {
     try {
-      const updateData = {
-        ...updates,
-        updatedAt: new Date()
-      };
-      
-      const updated = await db.updatePlant(id, updateData);
-      
-      if (updated === 0) {
-        return null;
-      }
-      
+      const updated = await firstValueFrom(
+        this.http.put<Plant>(`${this.apiUrl}/${encodeURIComponent(id)}`, {
+          ...updates
+        })
+      );
       await this.refreshPlants();
-      const plant = this.getPlantById(id);
-      console.log('✅ Plant updated in IndexedDB:', plant?.name);
-      return plant || null;
+      return this.hydratePlant(updated);
     } catch (error) {
       console.error('Error updating plant:', error);
       throw error;
@@ -127,17 +93,13 @@ export class PlantService {
    */
   async updatePlantAIData(id: string, aiData: Plant['aiData']): Promise<Plant | null> {
     try {
-      const updated = await db.updatePlant(id, {
-        aiData,
-        updatedAt: new Date()
-      });
-      
-      if (updated === 0) {
-        return null;
-      }
-      
+      const updated = await firstValueFrom(
+        this.http.put<Plant>(`${this.apiUrl}/${encodeURIComponent(id)}`, {
+          aiData
+        })
+      );
       await this.refreshPlants();
-      return this.getPlantById(id) || null;
+      return this.hydratePlant(updated);
     } catch (error) {
       console.error('Error updating plant AI data:', error);
       throw error;
@@ -149,9 +111,8 @@ export class PlantService {
    */
   async deletePlant(id: string): Promise<boolean> {
     try {
-      await db.deletePlant(id);
+      await firstValueFrom(this.http.delete(`${this.apiUrl}/${encodeURIComponent(id)}`, { responseType: 'text' }));
       await this.refreshPlants();
-      console.log('✅ Plant deleted from IndexedDB');
       return true;
     } catch (error) {
       console.error('Error deleting plant:', error);
@@ -233,5 +194,36 @@ export class PlantService {
       const dateB = new Date(b.plantedDate).getTime();
       return ascending ? dateA - dateB : dateB - dateA;
     });
+  }
+
+  private hydratePlant = (p: Plant): Plant => ({
+    ...p,
+    plantedDate: new Date(p.plantedDate),
+    createdAt: new Date(p.createdAt),
+    updatedAt: new Date(p.updatedAt),
+    aiData: p.aiData
+      ? {
+          ...p.aiData,
+          fetchedAt: new Date((p.aiData as any).fetchedAt),
+        }
+      : undefined,
+  });
+
+  private dehydratePlant(p: Plant): any {
+    return {
+      ...p,
+      plantedDate: p.plantedDate instanceof Date ? p.plantedDate.toISOString() : p.plantedDate,
+      createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt,
+      updatedAt: p.updatedAt instanceof Date ? p.updatedAt.toISOString() : p.updatedAt,
+      aiData: p.aiData
+        ? {
+            ...p.aiData,
+            fetchedAt:
+              (p.aiData as any).fetchedAt instanceof Date
+                ? (p.aiData as any).fetchedAt.toISOString()
+                : (p.aiData as any).fetchedAt,
+          }
+        : undefined,
+    };
   }
 }
