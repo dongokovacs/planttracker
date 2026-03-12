@@ -18,6 +18,31 @@ PlantTracker uses a **Page Object Model (POM)** pattern for E2E testing with Pla
 
 ---
 
+## Scope & Limitations
+
+**⚠️ This is a demo application with basic UI/E2E testing only.**
+
+### What's Included ✅
+- **UI/E2E Testing**: User interaction flows (navigation, form filling, submission)
+- **Basic Validation**: Visual assertions and navigation verification
+- **Page Object Model**: Reusable components for UI interaction abstraction
+- **Accessibility Patterns**: Semantic selectors and WCAG-compliant locators
+
+### What's NOT Included ❌
+- **API Schema Response Validation**: No database schema verification tests
+- **Load/Stress Testing**: No performance under heavy load
+- **Security Testing**: No XSS, CSRF, or authentication penetration tests
+- **Visual Regression Testing**: No screenshot comparisons
+
+### Future Enhancements
+For production use, consider adding:
+- API unit tests with Jest (backend)
+- API integration tests
+- Database schema validation
+- Visual regression testing (Percy, Chromatic)
+- Performance/load testing (k6, Artillery)
+- Security scanning (OWASP, Snyk)
+
 ## Test Architecture
 
 ### 1. **Page Object Model (POM)**

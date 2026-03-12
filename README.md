@@ -2,13 +2,7 @@
 
 ### Fejlesztés (Angular + Node + MySQL)
 
-#### 1) MySQL (Docker)
-
-```bash
-docker compose up -d
-```
-
-#### 2) Backend (Node/Express)
+#### 1) Backend (Node/Express)
 
 ```bash
 cd server
@@ -19,7 +13,7 @@ npm run dev
 
 Backend API: `http://localhost:3001/api`
 
-#### 3) Frontend (Angular)
+#### 2) Frontend (Angular)
 
 ```bash
 npm install
@@ -133,6 +127,15 @@ src/app/
 
 ##  Tesztelés
 
+### Teszt Írási Szabályok
+
+Playwright tesztek írásakor kövesd a szigorú szabályokat:
+- **Részletes útmutató**: [.github/instructions/playwright-testing.md](.github/instructions/playwright-testing.md)
+- **Gyors referencia**: Használj `getByRole()` > `getByLabel()` > `getByTestId()` prioritási sorrendet
+- **Tilos**: XPath, `waitForTimeout()`, `any` típus
+
+Lásd még: [READMETESTS.md](READMETESTS.md) - Teljes test architecture dokumentáció
+
 ### E2E Tesztek Playwright-val
 
 #### Helyi Futtatás
@@ -140,30 +143,6 @@ src/app/
 ```bash
 npm run test  # Playwright tesztek
 ```
-
-#### Docker-alapú Időzített Futtatás
-
-Ha szeretnéd rendszeresen futtatni a teszteket CI/CD nélkül, használd a Docker-alapú megoldást:
-
-```powershell
-# Első alkalommal: image építés
-docker-compose build
-
-# Tesztek futtatása
-.\run-tests.ps1
-
-# Időzített futtatás beállítása (pl. minden nap éjjel 2-kor)
-.\setup-scheduled-task.ps1 -Schedule Daily -Time "02:00"
-```
-
-**Részletes útmutató**: [DOCKER-TESTS.md](DOCKER-TESTS.md)
-
-#### Teszt Írási Szabályok
-
-Playwright tesztek írásakor kövesd a szigorú szabályokat:
-- **Részletes útmutató**: [.github/instructions/playwright-testing.md](.github/instructions/playwright-testing.md)
-- **Gyors referencia**: Használj `getByRole()` > `getByLabel()` > `getByTestId()` prioritási sorrendet
-- **Tilos**: XPath, `waitForTimeout()`, `any` típus
 
 ##  Fejlesztési Útmutató
 
