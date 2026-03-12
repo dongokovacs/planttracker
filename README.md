@@ -130,11 +130,9 @@ src/app/
 ### Teszt Írási Szabályok
 
 Playwright tesztek írásakor kövesd a szigorú szabályokat:
-- **Részletes útmutató**: [.github/instructions/playwright-testing.md](.github/instructions/playwright-testing.md)
+- **Részletes útmutató**: [READMETESTS.md](READMETESTS.md)
 - **Gyors referencia**: Használj `getByRole()` > `getByLabel()` > `getByTestId()` prioritási sorrendet
 - **Tilos**: XPath, `waitForTimeout()`, `any` típus
-
-Lásd még: [READMETESTS.md](READMETESTS.md) - Teljes test architecture dokumentáció
 
 ### E2E Tesztek Playwright-val
 
@@ -148,7 +146,8 @@ npm run test  # Playwright tesztek
 
 ### Kódolási Szabályok
 
-- **GitHub Copilot**: [.github/copilot-instructions.md](.github/copilot-instructions.md)
+- **GitHub Copilot**: [.github/copilot-instructions.md](.github/README.md)
+- **Best practices**: [.github/copilot-instructions.md](.agents/skills/playwright-best-practices)
 - **Playwright tesztek**: [.github/instructions/playwright-testing.md](.github/instructions/playwright-testing.md)
 - **TypeScript**: Strict typing, soha ne használj `any`
 - **Angular**: Standalone komponensek, Signals
