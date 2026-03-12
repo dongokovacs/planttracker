@@ -1,10 +1,6 @@
 ## PlantTracker backend (Node + MySQL)
 
-### 1) MySQL indítása (Docker)
 
-```bash
-docker compose up -d
-```
 
 Ez létrehozza a `planttracker` adatbázist és a `plants` táblát (init script: `server/sql/001_create_tables.sql`).
 

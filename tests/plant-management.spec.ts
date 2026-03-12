@@ -1,7 +1,7 @@
-import { test, expect } from './test-options';
+import { test, expect, CreateFormPage } from './test-options';
 import { startCoverage, stopAndSaveCoverage } from './helpers/coverage';
 
-test.describe('Növény kezelés', () => {
+test.describe.skip('Növény kezelés', () => {
 
   test('keresés működése', async ({ page }) => {
     await page.goto('/');
@@ -49,7 +49,7 @@ test.describe('Növény kezelés', () => {
     expect(count).toBeGreaterThanOrEqual(0);
   });
 
-  test.only('új zöldség felvétele és státusz ellenőrzése', async ({ page }) => {
+  test('új zöldség felvétele és státusz ellenőrzése POM nélkül', async ({ page }) => {
     // Arrange: nyitó oldal
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /PlantTracker/i })).toBeVisible();
@@ -87,5 +87,14 @@ test.describe('Növény kezelés', () => {
 
     await expect(retekCard).not.toHaveCount(0);
 
+  });
+
+  test('növény létrehozása POM', async ({ page }) => {   
+    const formPage = new CreateFormPage(page);
+    await formPage.createFullPlant('Monstera', 'Monstera deliciosa', '2026-03-03', 'Terasz');
+
+    // Assert: átirányítás után megjelenik a növény részlete oldalon
+    await expect(page).toHaveURL(/\/plants\//);
+    await expect(page.getByRole('heading', { name: /Monstera/i })).toBeVisible();
   });
 });

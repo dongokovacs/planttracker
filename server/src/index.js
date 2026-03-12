@@ -37,7 +37,7 @@ app.get('/api/plants', async (_req, res) => {
 
 app.get('/api/plants/:id', async (req, res) => {
   const { id } = req.params;
-  const [rows] = await pool.query('SELECT * FROM plants WHERE id = :id LIMIT 1', { id });
+  const [rows] = await pool.query('SELECT * FROM plants WHERE id = ? LIMIT 1', [id]);
   const row = rows[0];
   if (!row) return res.status(404).json({ error: 'Not found' });
   res.json(dbRowToPlant(row));
@@ -52,11 +52,11 @@ app.post('/api/plants', async (req, res) => {
 
   await pool.query(
     `INSERT INTO plants (id, name, variety, planted_date, location, notes, image_url, ai_data, created_at, updated_at)
-     VALUES (:id, :name, :variety, :planted_date, :location, :notes, :image_url, CAST(:ai_data AS JSON), :created_at, :updated_at)`,
-    params
+     VALUES (?, ?, ?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?)`,
+    [params.id, params.name, params.variety, params.planted_date, params.location, params.notes, params.image_url, params.ai_data, params.created_at, params.updated_at]
   );
 
-  const [rows] = await pool.query('SELECT * FROM plants WHERE id = :id LIMIT 1', { id: p.id });
+  const [rows] = await pool.query('SELECT * FROM plants WHERE id = ? LIMIT 1', [p.id]);
   res.status(201).json(dbRowToPlant(rows[0]));
 });
 
@@ -71,23 +71,37 @@ app.put('/api/plants/:id', async (req, res) => {
   };
   const params = updatesToDbParams(updates);
 
-  const setParts = Object.keys(params).map((k) => `${k} = :${k}`);
-  if (setParts.length === 0) return res.status(400).json({ error: 'No updates provided' });
+  const keys = Object.keys(params);
+  const values = Object.values(params);
+  
+  if (keys.length === 0) return res.status(400).json({ error: 'No updates provided' });
+
+  const setParts = keys.map(() => '?').join(', ');
+  const columnNames = keys.join(', ').replace(/_/g, (match, offset, str) => {
+    // Convert key names back to db column names
+    return match;
+  });
+  
+  // Reconstruct column assignment (key = ?)
+  const setClause = keys.map(k => `${k} = ?`).join(', ');
+  
+  values.push(new Date().toISOString().slice(0, 23).replace('T', ' '));
+  values.push(id);
 
   const [result] = await pool.query(
-    `UPDATE plants SET ${setParts.join(', ')}, updated_at = :updated_at WHERE id = :id`,
-    { ...params, updated_at: params.updated_at ?? new Date().toISOString().slice(0, 23).replace('T', ' '), id }
+    `UPDATE plants SET ${setClause}, updated_at = ? WHERE id = ?`,
+    values
   );
 
   if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
 
-  const [rows] = await pool.query('SELECT * FROM plants WHERE id = :id LIMIT 1', { id });
+  const [rows] = await pool.query('SELECT * FROM plants WHERE id = ? LIMIT 1', [id]);
   res.json(dbRowToPlant(rows[0]));
 });
 
 app.delete('/api/plants/:id', async (req, res) => {
   const { id } = req.params;
-  const [result] = await pool.query('DELETE FROM plants WHERE id = :id', { id });
+  const [result] = await pool.query('DELETE FROM plants WHERE id = ?', [id]);
   if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
   res.status(204).send();
 });

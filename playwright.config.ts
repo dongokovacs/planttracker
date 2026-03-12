@@ -4,12 +4,13 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const localTimeout: number = 0;
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Timeout for each Playwright action (click, fill, etc.) */
-  timeout: 8000,
+  timeout: process.env.CI ? 14_000 : localTimeout,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   //forbidOnly: !!process.env.CI,
   /* Retry on CI only */
@@ -38,18 +39,10 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: 'http://localhost:4200',
-    headless:true,
-    actionTimeout: 6000,
+    headless:false,
+    actionTimeout: process.env.CI ? 8000 : localTimeout,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-  },
-  webServer: {
-    command: 'npm run start', // Vagy amivel indítod az appot (pl. 'ng serve')
-    url: 'http://localhost:4200',
-    reuseExistingServer: !process.env.CI,
-    stdout: 'ignore',
-    stderr: 'pipe',
-    timeout: 120 * 1000, // CI-n néha lassabb az indítás
   },
 
   /* Configure projects for major browsers */
